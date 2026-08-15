@@ -4,7 +4,7 @@ Modular-monolith Node.js API for Cravio's video-first restaurant menu platform.
 
 ## Requirements
 
-- Node.js 22 and npm
+- Node.js 24 and npm
 - PostgreSQL 16-compatible database
 - Clerk application and webhook secret
 - S3-compatible object storage/CDN

@@ -13,7 +13,7 @@ jobs:
         env:
           POSTGRES_DB: cravio_test
           POSTGRES_USER: cravio
-          POSTGRES_PASSWORD: cravio_test
+          POSTGRES_HOST_AUTH_METHOD: trust
         ports:
           - 5432:5432
         options: >-
@@ -23,12 +23,12 @@ jobs:
           --health-retries 10
     env:
       NODE_ENV: test
-      DATABASE_URL: postgresql://cravio:cravio_test@127.0.0.1:5432/cravio_test
+      DATABASE_URL: postgresql://cravio@127.0.0.1:5432/cravio_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
       - run: npm ci
       - run: npm run format:check
