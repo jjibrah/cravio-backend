@@ -1,0 +1,106 @@
+# Cravio Core Infrastructure
+
+## Architecture and request lifecycle
+
+Cravio remains a modular monolith. Shared infrastructure is initialized once and business modules receive database, storage, authentication, validation, and logging dependencies through the application composition root.
+
+```text
+request ID → request logging → Helmet → CORS → general rate limit
+→ raw Clerk webhook or bounded JSON parser → route-specific rate limit
+→ authentication → account/role authorization → Zod validation
+→ controller → service → PostgreSQL/S3-compatible storage
+→ centralized JSON error response
+```
+
+The Clerk webhook is registered with `express.raw` before the JSON parser so signature verification receives the original bytes. Public QR, diner menu, analytics ingestion, restaurant lookup, and health routes intentionally do not use Clerk middleware. Owner and admin routes consistently authenticate against Clerk and authorize from the local `users` record.
+
+## Configuration
+
+`src/core/config/env.js` is the only environment parser. `src/config.js` exports its normalized result for backward-compatible module consumption. Production boot rejects missing database, Clerk, frontend-origin, or storage configuration and rejects invalid URLs, integers, environment names, and storage providers.
+
+Required production groups are:
+
+- `NODE_ENV`, `PORT`, `DATABASE_URL`
+- `CLERK_SECRET_KEY`, `CLERK_PUBLISHABLE_KEY`, `CLERK_WEBHOOK_SIGNING_SECRET`
+- `FRONTEND_URL`, optional `ADMIN_APP_URL`, and `PUBLIC_APP_URL`
+- the `MEDIA_STORAGE_*` values and `STORAGE_PROVIDER=s3`
+- media limits and optional FFmpeg/FFprobe paths
+
+Pool, request-body, health timeout, trusted-proxy, and rate-limit values are documented in `.env.example`. No secret values are committed.
+
+## Database
+
+All repositories share the PostgreSQL pool from `src/database/pool.js`. It configures maximum connections, connection timeout, query timeout, and environment-aware SSL. Startup executes a lightweight `SELECT 1`; migrations are not run automatically. SIGTERM/SIGINT shutdown closes the HTTP server and pool with a ten-second fallback.
+
+`database/db.sql` is the ordered canonical reconstruction containing users, restaurants, menu categories/items, media, tables, admin audit logs, and analytics sessions/events with their constraints and indexes. Incremental migrations remain intact. Run `npm run db:verify` against PostgreSQL to create the snapshot inside a temporary transaction/schema, assert its table count, and roll everything back.
+
+The database is currently reference-only, so this command requires a configured reachable PostgreSQL instance and was not run during the current local verification.
+
+## Storage
+
+Media uses one S3-compatible adapter. Services see signed-upload creation, inspection, temporary download, generated-file upload, deletion, and a configuration health signal; provider SDK objects remain isolated. Production boot rejects incomplete storage configuration. Readiness checks configuration only and does not upload/delete probe objects. Videos are delivered by CDN/storage, never proxied through Express.
+
+## Authentication and authorization
+
+`createAuthMiddleware` verifies Clerk context, resolves the local user, rejects missing/disabled profiles, and attaches:
+
+```text
+req.auth.clerkUserId
+req.auth.user
+```
+
+The local role and status are authoritative. `requireRole(...)` performs role checks. `requireActiveAccount` returns `ACCOUNT_SUSPENDED` or `ACCOUNT_DISABLED`; suspended authentication may succeed but protected business operations cannot. Business services continue to scope restaurants, categories, items, media, tables, and analytics to the authenticated owner's local restaurant, preserving IDOR protection.
+
+## Validation and errors
+
+Routes reuse `validate(schema, source)`, supporting body, params, and query sources. Successful parsed queries are exposed as `req.validatedQuery`. Strict Zod schemas reject unknown fields, invalid UUIDs/enums, malformed filters, and mass assignment.
+
+Validation failures return `VALIDATION_ERROR` with a normalized list of `{ field, message }` values. `AppError` provides status, code, details, and operational classification. Unknown routes return JSON `ROUTE_NOT_FOUND`; unexpected errors return `INTERNAL_SERVER_ERROR` without stacks, SQL, paths, or credentials. JSON is limited to 100 KB by default; direct media uploads bypass Express and use their own limits.
+
+## Security and rate limiting
+
+Helmet supplies standard HTTP protections. CORS echoes only configured origins with credentials and supports explicit development localhost origins; production never combines wildcard origin with credentials. `TRUST_PROXY` accepts only explicit safe Express presets and is disabled by default.
+
+Central rate-limit infrastructure supplies separate defaults for general API traffic, public menus, analytics session/event ingestion, media processing, and admin routes. Storage keys are generated by the backend, dynamic SQL sort fields are whitelisted, queries use parameters, and public response mappers omit ownership, Clerk, storage-key, audit, and private status fields.
+
+Content Security Policy for the diner frontend remains a frontend/deployment concern because media is loaded directly from the configured CDN.
+
+## Logging and audit
+
+Application logs are structured JSON with timestamp, level, message, request ID, method, safe path, status, duration, and authenticated local user ID when available. Request bodies and authorization headers are not logged. Keys matching authorization, cookie, token, secret, password, or database URL are redacted. High-volume public analytics requests log at debug level.
+
+Application logs describe technical behavior. `admin_audit_logs` records sensitive business changes transactionally: owner/restaurant status changes and owner/admin role changes. GET requests do not create audit records. Audit JSON never contains credentials. QR regeneration remains owner business state rather than a platform-admin action and is not written into the admin-only audit table.
+
+## Health
+
+- `GET /health`: process liveness, always lightweight, returns HTTP 200 while Express is responsive.
+- `GET /health/ready`: bounded database and storage-configuration checks. Returns HTTP 200 only when both are ready, otherwise HTTP 503 with safe `ok`/`unavailable` states.
+
+No credentials, addresses, raw provider errors, or environment values appear in health responses.
+
+## Startup and shutdown
+
+Startup loads and validates configuration, initializes the pool, verifies PostgreSQL, creates storage/application dependencies, and begins listening. Fatal startup errors are structured and result in a failing process status. SIGINT, SIGTERM, unhandled rejections, and uncaught exceptions stop accepting traffic, close the pool, and terminate so the hosting platform can restart unsafe processes.
+
+## Deployment notes
+
+- Terminate HTTPS at the load balancer/reverse proxy.
+- Configure `TRUST_PROXY` only for the actual trusted proxy topology.
+- Configure CDN/bucket read policy and browser direct-upload CORS.
+- Install FFmpeg/FFprobe in the runtime image.
+- Configure PostgreSQL SSL appropriately and run migrations separately from application startup.
+- Use `/health` for liveness and `/health/ready` for traffic readiness.
+- Videos bypass the application proxy; normal JSON limits should remain small.
+
+## Testing and operations
+
+```bash
+npm run dev
+npm test
+npm run lint
+npm run typecheck
+npm run db:migrate
+npm run db:verify
+```
+
+Automated infrastructure tests mock PostgreSQL/storage and cover configuration, authentication regressions, validation, CORS, rate limiting, request IDs/logging, error safety, health behavior, and graceful shutdown.
