@@ -114,6 +114,19 @@ CREATE TABLE IF NOT EXISTS restaurant_tables (
   CONSTRAINT restaurant_tables_restaurant_code_key UNIQUE (restaurant_id, code)
 );
 
+-- Minimal immutable trail for sensitive platform-admin mutations. target_id is
+-- polymorphic across users/restaurants, so application services validate it.
+CREATE TABLE IF NOT EXISTS admin_audit_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  admin_user_id UUID NOT NULL REFERENCES users(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  action TEXT NOT NULL CHECK (action IN ('OWNER_STATUS_CHANGED', 'RESTAURANT_STATUS_CHANGED', 'OWNER_ROLE_CHANGED', 'USER_STATUS_CHANGED')),
+  target_type TEXT NOT NULL CHECK (target_type IN ('user', 'restaurant')),
+  target_id UUID NOT NULL,
+  old_values JSONB NOT NULL,
+  new_values JSONB NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Supporting indexes (unique constraints already create their own indexes).
 CREATE INDEX IF NOT EXISTS users_role_idx ON users (role);
 CREATE INDEX IF NOT EXISTS users_status_idx ON users (status);
@@ -129,6 +142,10 @@ CREATE INDEX IF NOT EXISTS menu_items_restaurant_active_idx ON menu_items (resta
 CREATE INDEX IF NOT EXISTS media_assets_item_ready_idx ON media_assets (menu_item_id, updated_at DESC) WHERE status = 'ready';
 CREATE INDEX IF NOT EXISTS media_assets_restaurant_idx ON media_assets (restaurant_id);
 CREATE INDEX IF NOT EXISTS restaurant_tables_restaurant_active_idx ON restaurant_tables (restaurant_id, is_active);
+CREATE INDEX IF NOT EXISTS restaurants_published_idx ON restaurants (is_published);
+CREATE INDEX IF NOT EXISTS admin_audit_logs_admin_idx ON admin_audit_logs (admin_user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS admin_audit_logs_target_idx ON admin_audit_logs (target_type, target_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS admin_audit_logs_created_at_idx ON admin_audit_logs (created_at DESC);
 
 COMMENT ON CONSTRAINT restaurants_owner_id_key ON restaurants IS
   'V1 one-restaurant-per-owner rule; drop this constraint when multi-restaurant ownership is enabled.';

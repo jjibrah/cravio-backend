@@ -22,14 +22,28 @@ export class MemoryUsers {
   async disableByClerkId(id) { const row = await this.findByClerkId(id); if (row) row.status = 'disabled'; return row; }
 }
 
+export class MemoryAdminRepository {
+  constructor(users) { this.users = users; this.audits = []; }
+  async countActiveAdmins() { return this.users.rows.filter((x) => x.role === 'admin' && x.status === 'active').length; }
+  async changeUserStatus(adminId, id, status, action = 'OWNER_STATUS_CHANGED') { const row = await this.users.findById(id); if (!row) return null; const old = row.status; row.status = status; this.audits.push({ admin_user_id: adminId, action, target_type: 'user', target_id: id, old_values: { status: old }, new_values: { status } }); return row; }
+  async changeUserRole(adminId, id, role) { const row = await this.users.findById(id); if (!row) return null; const old = row.role; row.role = role; this.audits.push({ admin_user_id: adminId, action: 'OWNER_ROLE_CHANGED', target_type: 'user', target_id: id, old_values: { role: old }, new_values: { role } }); return row; }
+  async getOwner(id) { const row = await this.users.findById(id); return row?.role === 'owner' ? { ...row, restaurant: null } : null; }
+  async listOwners({ page, limit, status, search }) { const filtered = this.users.rows.filter((x) => x.role === 'owner' && (!status || x.status === status) && (!search || `${x.first_name} ${x.last_name} ${x.email}`.toLowerCase().includes(search.toLowerCase()))); return { items: filtered.slice((page - 1) * limit, page * limit), total: filtered.length }; }
+  async metrics() { return { total_owners: this.users.rows.filter((x) => x.role === 'owner').length, active_owners: this.users.rows.filter((x) => x.role === 'owner' && x.status === 'active').length, total_restaurants: 0, active_restaurants: 0, published_restaurants: 0, total_menu_items: 0, total_tables: 0 }; }
+  async listRestaurants() { return { items: [], total: 0 }; }
+  async getRestaurant() { return null; }
+  async changeRestaurantStatus() { return null; }
+}
+
 /** @param {any} [options] */
 export function testApp(options = {}) {
   const {
     users = new MemoryUsers(), authUserId = owner.clerk_user_id, authError, webhookVerifier,
     restaurantRepository, menuRepository, mediaRepository, mediaStorage, mediaLimits,
     tableRepository, qrService, publicAppUrl, publicMenuRepository, publicMenuLimiter,
-    clerkMiddleware
+    clerkMiddleware, adminRepository
   } = options;
+  const adminData = adminRepository || new MemoryAdminRepository(users);
   return { users, app: createApp({
     userRepository: users,
     db: { query: async () => ({ rows: [] }) },
@@ -45,6 +59,7 @@ export function testApp(options = {}) {
     qrService,
     publicAppUrl,
     publicMenuRepository,
-    publicMenuLimiter
+    publicMenuLimiter,
+    adminRepository: adminData
   }) };
 }

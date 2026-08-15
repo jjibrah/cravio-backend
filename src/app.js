@@ -11,7 +11,7 @@ import { createMenuController } from './menu/menu.controller.js';
 import { createMenuRouter } from './menu/menu.routes.js';
 import { errorHandler, notFoundHandler } from './shared/error-handler.js';
 import { createUserController } from './users/user.controller.js';
-import { createAdminUserRouter, createUserRouter } from './users/user.routes.js';
+import { createUserRouter } from './users/user.routes.js';
 import { createClerkWebhookHandler } from './webhooks/clerk.webhook.js';
 import { MediaRepository } from './media/media.repository.js';
 import { MediaService } from './media/media.service.js';
@@ -28,13 +28,18 @@ import { PublicMenuRepository } from './public-menu/public-menu.repository.js';
 import { PublicMenuService } from './public-menu/public-menu.service.js';
 import { createPublicMenuController } from './public-menu/public-menu.controller.js';
 import { createPublicMenuRouter } from './public-menu/public-menu.routes.js';
+import { AdminRepository } from './admin/admin.repository.js';
+import { AdminService } from './admin/admin.service.js';
+import { createAdminController } from './admin/admin.controller.js';
+import { createAdminRouter } from './admin/admin.routes.js';
 
 /** @param {any} [options] */
 export function createApp(options = {}) {
   const {
     db = pool, authResolver, clerkAuthMiddleware, webhookVerifier, userRepository,
     restaurantRepository, menuRepository, mediaRepository, mediaStorage, mediaLimits,
-    tableRepository, qrService, publicAppUrl, publicMenuRepository, publicMenuLimiter
+    tableRepository, qrService, publicAppUrl, publicMenuRepository, publicMenuLimiter,
+    adminRepository
   } = options;
   const app = express();
   app.use(helmet());
@@ -57,6 +62,8 @@ export function createApp(options = {}) {
   const tableController = createTableController(tableService);
   const publicMenus = publicMenuRepository || new PublicMenuRepository(db);
   const publicMenuController = createPublicMenuController(new PublicMenuService({ publicMenus, tables: tableService }));
+  const adminData = adminRepository || new AdminRepository(db);
+  const adminController = createAdminController(new AdminService({ admin: adminData, users }));
 
   // Public diner routes intentionally run before Clerk middleware.
   app.use('/api/public/qr', createPublicQrRouter(tableController));
@@ -64,7 +71,7 @@ export function createApp(options = {}) {
   app.use(clerkAuthMiddleware || clerkMiddleware());
 
   app.use('/api/users', createUserRouter({ auth, controller: userController }));
-  app.use('/api/admin/users', createAdminUserRouter({ auth, controller: userController }));
+  app.use('/api/admin', createAdminRouter({ auth, controller: adminController }));
   app.use('/api/menu', createMenuRouter({ auth, controller }));
   app.use('/api/media', createMediaRouter({ auth, controller: mediaController }));
   app.use('/api/tables', createTableRouter({ auth, controller: tableController }));

@@ -12,6 +12,8 @@ export class MenuService {
   async ownerRestaurant(userId) {
     const restaurant = await this.restaurants.findByOwnerUserId(userId);
     if (!restaurant) throw notFound('RESTAURANT_NOT_FOUND', 'Restaurant not found for this owner');
+    if (restaurant.status === 'suspended') throw new AppError(403, 'RESTAURANT_SUSPENDED', 'Restaurant is suspended');
+    if (restaurant.status === 'disabled') throw new AppError(403, 'RESTAURANT_DISABLED', 'Restaurant is disabled');
     return restaurant;
   }
 
