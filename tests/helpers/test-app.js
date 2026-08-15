@@ -26,7 +26,8 @@ export class MemoryUsers {
 export function testApp(options = {}) {
   const {
     users = new MemoryUsers(), authUserId = owner.clerk_user_id, authError, webhookVerifier,
-    restaurantRepository, menuRepository, mediaRepository, mediaStorage, mediaLimits
+    restaurantRepository, menuRepository, mediaRepository, mediaStorage, mediaLimits,
+    tableRepository, qrService, publicAppUrl
   } = options;
   return { users, app: createApp({
     userRepository: users,
@@ -38,6 +39,9 @@ export function testApp(options = {}) {
     menuRepository,
     mediaRepository,
     mediaStorage,
-    mediaLimits
+    mediaLimits,
+    tableRepository,
+    qrService,
+    publicAppUrl
   }) };
 }

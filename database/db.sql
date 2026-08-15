@@ -99,6 +99,21 @@ CREATE TABLE IF NOT EXISTS media_assets (
   CONSTRAINT media_assets_ready_fields_check CHECK (status <> 'ready' OR (video_url IS NOT NULL AND size_bytes IS NOT NULL))
 );
 
+-- Restaurant tables use stable, globally unique public QR tokens. Deactivation
+-- preserves the token so an old QR can never be reassigned to another table.
+CREATE TABLE IF NOT EXISTS restaurant_tables (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  restaurant_id UUID NOT NULL REFERENCES restaurants(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  name VARCHAR(100) NOT NULL CHECK (btrim(name) <> ''),
+  code VARCHAR(20) NOT NULL CHECK (code ~ '^[A-Z0-9_-]+$'),
+  qr_token UUID NOT NULL UNIQUE,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT restaurant_tables_restaurant_name_key UNIQUE (restaurant_id, name),
+  CONSTRAINT restaurant_tables_restaurant_code_key UNIQUE (restaurant_id, code)
+);
+
 -- Supporting indexes (unique constraints already create their own indexes).
 CREATE INDEX IF NOT EXISTS users_role_idx ON users (role);
 CREATE INDEX IF NOT EXISTS users_status_idx ON users (status);
@@ -113,6 +128,7 @@ CREATE INDEX IF NOT EXISTS menu_items_category_order_idx ON menu_items (category
 CREATE INDEX IF NOT EXISTS menu_items_restaurant_active_idx ON menu_items (restaurant_id, is_active);
 CREATE INDEX IF NOT EXISTS media_assets_item_ready_idx ON media_assets (menu_item_id, updated_at DESC) WHERE status = 'ready';
 CREATE INDEX IF NOT EXISTS media_assets_restaurant_idx ON media_assets (restaurant_id);
+CREATE INDEX IF NOT EXISTS restaurant_tables_restaurant_active_idx ON restaurant_tables (restaurant_id, is_active);
 
 COMMENT ON CONSTRAINT restaurants_owner_id_key ON restaurants IS
   'V1 one-restaurant-per-owner rule; drop this constraint when multi-restaurant ownership is enabled.';
