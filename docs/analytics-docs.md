@@ -18,17 +18,17 @@ Session IDs are globally unique and are the only context accepted by event inges
 
 ## Events
 
-| Event | Frontend meaning | Item required | Duration |
-|---|---|---:|---:|
-| `MENU_VIEW` | Public menu is opened | No | No |
-| `ITEM_IMPRESSION` | Item becomes visible in the viewport | Yes | No |
-| `VIDEO_OPEN` | Video/player detail is opened | Yes | No |
-| `VIDEO_PLAY` | Playback actually begins | Yes | No |
-| `VIDEO_PROGRESS` | Meaningful playback progress | Yes | Required |
-| `VIDEO_COMPLETE` | Video reaches the chosen completion threshold | Yes | Required |
-| `ADD_TO_SELECTION` | Item is added to the local-device selection | Yes | No |
-| `REMOVE_FROM_SELECTION` | Item is removed from the selection | Yes | No |
-| `SHOW_WAITER` | Final selection screen is shown | No | No |
+| Event                   | Frontend meaning                              | Item required | Duration |
+| ----------------------- | --------------------------------------------- | ------------: | -------: |
+| `MENU_VIEW`             | Public menu is opened                         |            No |       No |
+| `ITEM_IMPRESSION`       | Item becomes visible in the viewport          |           Yes |       No |
+| `VIDEO_OPEN`            | Video/player detail is opened                 |           Yes |       No |
+| `VIDEO_PLAY`            | Playback actually begins                      |           Yes |       No |
+| `VIDEO_PROGRESS`        | Meaningful playback progress                  |           Yes | Required |
+| `VIDEO_COMPLETE`        | Video reaches the chosen completion threshold |           Yes | Required |
+| `ADD_TO_SELECTION`      | Item is added to the local-device selection   |           Yes |       No |
+| `REMOVE_FROM_SELECTION` | Item is removed from the selection            |           Yes |       No |
+| `SHOW_WAITER`           | Final selection screen is shown               |            No |       No |
 
 The frontend should emit progress at meaningful intervals (for example every five seconds or at 25/50/75 percent), not every second. Watch duration accepts 0–120 seconds. Repeated events are retained because repeated views and plays are legitimate.
 
@@ -68,13 +68,13 @@ Returns HTTP 202 with `{ "success": true }`. The backend verifies the active ses
 
 All report endpoints require `requireAuth`, an active local account, and local role `owner`. The restaurant is derived from the authenticated local user; no restaurant ID is accepted from the client.
 
-| Method and path | Result |
-|---|---|
-| `GET /api/analytics/overview` | Headline counts, average watch duration, unique sessions, and rates |
-| `GET /api/analytics/items` | Per-item performance; optional `sort=video_opens\|selection_rate\|impressions\|adds_to_selection` |
-| `GET /api/analytics/items/:id` | Detailed owned-item performance |
-| `GET /api/analytics/categories` | Category impressions, video opens, selections, and unique sessions |
-| `GET /api/analytics/tables` | Sessions and engagement grouped by table |
+| Method and path                 | Result                                                                                            |
+| ------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `GET /api/analytics/overview`   | Headline counts, average watch duration, unique sessions, and rates                               |
+| `GET /api/analytics/items`      | Per-item performance; optional `sort=video_opens\|selection_rate\|impressions\|adds_to_selection` |
+| `GET /api/analytics/items/:id`  | Detailed owned-item performance                                                                   |
+| `GET /api/analytics/categories` | Category impressions, video opens, selections, and unique sessions                                |
+| `GET /api/analytics/tables`     | Sessions and engagement grouped by table                                                          |
 
 All accept `from=YYYY-MM-DD&to=YYYY-MM-DD`. The inclusive default is the latest 30 calendar days; the maximum span is 365 days. Invalid or reversed ranges return HTTP 400. A foreign restaurant's item is deliberately returned as not found.
 

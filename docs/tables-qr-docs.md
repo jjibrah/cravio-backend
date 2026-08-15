@@ -51,19 +51,19 @@ The reusable `TableService.resolveQrToken(token)` method is intended for the fut
 
 Owner endpoints use `{ "success": true, "data": ... }` and require an active owner.
 
-| Method | URL | Request | Result | Common errors |
-|---|---|---|---|---|
-| POST | `/api/tables` | `{ "name": "Table 1", "code": "T01" }` | `201` table and QR URL | `TABLE_ALREADY_EXISTS`, `RESTAURANT_NOT_FOUND` |
-| POST | `/api/tables/bulk` | `{ "count": 20, "prefix": "Table", "code_prefix": "T" }` | `201` created tables | validation, `TABLE_ALREADY_EXISTS` |
-| GET | `/api/tables` | none | owner’s tables | authentication/status errors |
-| GET | `/api/tables/:id` | none | owned table | `TABLE_NOT_FOUND` |
-| PATCH | `/api/tables/:id` | safe subset of `name`, `code`, `is_active` | updated table | validation, `TABLE_NOT_FOUND`, conflict |
-| DELETE | `/api/tables/:id` | none | deactivated table | `TABLE_NOT_FOUND` |
-| GET | `/api/tables/:id/qr?format=png\|svg` | none | downloadable QR image | `TABLE_NOT_FOUND`, invalid format |
-| GET | `/api/tables/:id/qr/print` | none | single-table print HTML | `TABLE_NOT_FOUND` |
-| GET | `/api/tables/qr/print` | none | active-table print HTML | authentication/status errors |
-| POST | `/api/tables/:id/qr/regenerate` | none | table and new QR URL | `TABLE_NOT_FOUND`, `QR_TOKEN_CONFLICT` |
-| GET | `/api/public/qr/:token` | none; public | safe restaurant/table context | `QR_NOT_FOUND` |
+| Method | URL                                  | Request                                                  | Result                        | Common errors                                  |
+| ------ | ------------------------------------ | -------------------------------------------------------- | ----------------------------- | ---------------------------------------------- |
+| POST   | `/api/tables`                        | `{ "name": "Table 1", "code": "T01" }`                   | `201` table and QR URL        | `TABLE_ALREADY_EXISTS`, `RESTAURANT_NOT_FOUND` |
+| POST   | `/api/tables/bulk`                   | `{ "count": 20, "prefix": "Table", "code_prefix": "T" }` | `201` created tables          | validation, `TABLE_ALREADY_EXISTS`             |
+| GET    | `/api/tables`                        | none                                                     | owner’s tables                | authentication/status errors                   |
+| GET    | `/api/tables/:id`                    | none                                                     | owned table                   | `TABLE_NOT_FOUND`                              |
+| PATCH  | `/api/tables/:id`                    | safe subset of `name`, `code`, `is_active`               | updated table                 | validation, `TABLE_NOT_FOUND`, conflict        |
+| DELETE | `/api/tables/:id`                    | none                                                     | deactivated table             | `TABLE_NOT_FOUND`                              |
+| GET    | `/api/tables/:id/qr?format=png\|svg` | none                                                     | downloadable QR image         | `TABLE_NOT_FOUND`, invalid format              |
+| GET    | `/api/tables/:id/qr/print`           | none                                                     | single-table print HTML       | `TABLE_NOT_FOUND`                              |
+| GET    | `/api/tables/qr/print`               | none                                                     | active-table print HTML       | authentication/status errors                   |
+| POST   | `/api/tables/:id/qr/regenerate`      | none                                                     | table and new QR URL          | `TABLE_NOT_FOUND`, `QR_TOKEN_CONFLICT`         |
+| GET    | `/api/public/qr/:token`              | none; public                                             | safe restaurant/table context | `QR_NOT_FOUND`                                 |
 
 Unknown fields, malformed UUIDs, invalid code characters, unsupported formats, and invalid bulk counts return `400` through the centralized validation handler.
 

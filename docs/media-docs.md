@@ -39,14 +39,14 @@ Production startup fails clearly when bucket, credentials, or public URL are inc
 
 All endpoints require Clerk authentication followed by an active local owner account. Restaurant and item ownership are derived server-side.
 
-| Method | Endpoint | Body | Result |
-|---|---|---|---|
-| `POST` | `/api/media/menu-items/:itemId/video-upload` | `{"mime_type":"video/mp4","original_filename":"dish.mp4"}` | Processing record and signed upload URL |
-| `POST` | `/api/media/:id/complete` | `{}` | Probe, generate thumbnail, and atomically activate video |
-| `GET` | `/api/media/menu-items/:itemId` | none | Current ready owner metadata |
-| `POST` | `/api/media/:id/thumbnail-upload` | `{"mime_type":"image/webp"}` | Optional replacement-thumbnail upload URL |
-| `POST` | `/api/media/:id/thumbnail-complete` | `{}` | Validate optional replacement thumbnail |
-| `DELETE` | `/api/media/:id` | none | Soft-delete metadata and remove objects |
+| Method   | Endpoint                                     | Body                                                       | Result                                                   |
+| -------- | -------------------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------- |
+| `POST`   | `/api/media/menu-items/:itemId/video-upload` | `{"mime_type":"video/mp4","original_filename":"dish.mp4"}` | Processing record and signed upload URL                  |
+| `POST`   | `/api/media/:id/complete`                    | `{}`                                                       | Probe, generate thumbnail, and atomically activate video |
+| `GET`    | `/api/media/menu-items/:itemId`              | none                                                       | Current ready owner metadata                             |
+| `POST`   | `/api/media/:id/thumbnail-upload`            | `{"mime_type":"image/webp"}`                               | Optional replacement-thumbnail upload URL                |
+| `POST`   | `/api/media/:id/thumbnail-complete`          | `{}`                                                       | Validate optional replacement thumbnail                  |
+| `DELETE` | `/api/media/:id`                             | none                                                       | Soft-delete metadata and remove objects                  |
 
 Upload initialization and completion share a conservative default limit of 20 requests per request context per hour. Common errors include `VIDEO_TOO_LARGE`, `VIDEO_TOO_LONG`, `UNSUPPORTED_VIDEO_FORMAT`, `INVALID_VIDEO`, `THUMBNAIL_GENERATION_FAILED`, `MEDIA_PROCESSING_FAILED`, `MEDIA_NOT_FOUND`, `MENU_ITEM_NOT_FOUND`, and `MEDIA_STORAGE_UNAVAILABLE`.
 

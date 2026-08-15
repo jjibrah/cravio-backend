@@ -12,16 +12,20 @@ export class MenuService {
   async ownerRestaurant(userId) {
     const restaurant = await this.restaurants.findByOwnerUserId(userId);
     if (!restaurant) throw notFound('RESTAURANT_NOT_FOUND', 'Restaurant not found for this owner');
-    if (restaurant.status === 'suspended') throw new AppError(403, 'RESTAURANT_SUSPENDED', 'Restaurant is suspended');
-    if (restaurant.status === 'disabled') throw new AppError(403, 'RESTAURANT_DISABLED', 'Restaurant is disabled');
+    if (restaurant.status === 'suspended')
+      throw new AppError(403, 'RESTAURANT_SUSPENDED', 'Restaurant is suspended');
+    if (restaurant.status === 'disabled')
+      throw new AppError(403, 'RESTAURANT_DISABLED', 'Restaurant is disabled');
     return restaurant;
   }
 
   async createCategory(userId, data) {
     const restaurant = await this.ownerRestaurant(userId);
-    try { return await this.menus.createCategory(restaurant.id, data); }
-    catch (error) {
-      if (error.code === '23505') throw new AppError(409, 'CATEGORY_NAME_EXISTS', 'A category with this name already exists');
+    try {
+      return await this.menus.createCategory(restaurant.id, data);
+    } catch (error) {
+      if (error.code === '23505')
+        throw new AppError(409, 'CATEGORY_NAME_EXISTS', 'A category with this name already exists');
       throw error;
     }
   }
@@ -45,24 +49,33 @@ export class MenuService {
       if (!category) throw categoryNotFound();
       return category;
     } catch (error) {
-      if (error.code === '23505') throw new AppError(409, 'CATEGORY_NAME_EXISTS', 'A category with this name already exists');
+      if (error.code === '23505')
+        throw new AppError(409, 'CATEGORY_NAME_EXISTS', 'A category with this name already exists');
       throw error;
     }
   }
 
   async deleteCategory(userId, id) {
     const restaurant = await this.ownerRestaurant(userId);
-    if (!await this.menus.findCategory(id, restaurant.id)) throw categoryNotFound();
+    if (!(await this.menus.findCategory(id, restaurant.id))) throw categoryNotFound();
     if (await this.menus.categoryItemCount(id, restaurant.id)) {
-      throw new AppError(409, 'CATEGORY_HAS_ITEMS', 'Category cannot be deleted while it contains menu items');
+      throw new AppError(
+        409,
+        'CATEGORY_HAS_ITEMS',
+        'Category cannot be deleted while it contains menu items',
+      );
     }
     await this.menus.deleteCategory(id, restaurant.id);
   }
 
   async reorderCategories(userId, ids) {
     const restaurant = await this.ownerRestaurant(userId);
-    if (!await this.menus.reorderCategories(restaurant.id, ids)) {
-      throw new AppError(400, 'INVALID_REORDER', 'Category IDs must exactly match the restaurant categories');
+    if (!(await this.menus.reorderCategories(restaurant.id, ids))) {
+      throw new AppError(
+        400,
+        'INVALID_REORDER',
+        'Category IDs must exactly match the restaurant categories',
+      );
     }
     return this.menus.listCategories(restaurant.id);
   }
@@ -70,15 +83,20 @@ export class MenuService {
   async createItem(userId, data) {
     const restaurant = await this.ownerRestaurant(userId);
     const category = await this.menus.findCategory(data.category_id, restaurant.id);
-    if (!category) throw new AppError(400, 'INVALID_CATEGORY', 'Category does not belong to this restaurant');
+    if (!category)
+      throw new AppError(400, 'INVALID_CATEGORY', 'Category does not belong to this restaurant');
     const item = await this.menus.createItem(restaurant.id, data);
-    if (!item) throw new AppError(400, 'INVALID_CATEGORY', 'Category does not belong to this restaurant');
+    if (!item)
+      throw new AppError(400, 'INVALID_CATEGORY', 'Category does not belong to this restaurant');
     return item;
   }
 
   async listItems(userId, filters) {
     const restaurant = await this.ownerRestaurant(userId);
-    if (filters.category_id && !await this.menus.findCategory(filters.category_id, restaurant.id)) {
+    if (
+      filters.category_id &&
+      !(await this.menus.findCategory(filters.category_id, restaurant.id))
+    ) {
       throw new AppError(400, 'INVALID_CATEGORY', 'Category does not belong to this restaurant');
     }
     return this.menus.listItems(restaurant.id, filters);
@@ -93,8 +111,8 @@ export class MenuService {
 
   async updateItem(userId, id, data) {
     const restaurant = await this.ownerRestaurant(userId);
-    if (!await this.menus.findItem(id, restaurant.id)) throw itemNotFound();
-    if (data.category_id && !await this.menus.findCategory(data.category_id, restaurant.id)) {
+    if (!(await this.menus.findItem(id, restaurant.id))) throw itemNotFound();
+    if (data.category_id && !(await this.menus.findCategory(data.category_id, restaurant.id))) {
       throw new AppError(400, 'INVALID_CATEGORY', 'Category does not belong to this restaurant');
     }
     try {
@@ -102,7 +120,8 @@ export class MenuService {
       if (!item) throw itemNotFound();
       return item;
     } catch (error) {
-      if (error.code === '23503') throw new AppError(400, 'INVALID_CATEGORY', 'Category does not belong to this restaurant');
+      if (error.code === '23503')
+        throw new AppError(400, 'INVALID_CATEGORY', 'Category does not belong to this restaurant');
       throw error;
     }
   }
@@ -120,11 +139,15 @@ export class MenuService {
 
   async reorderItems(userId, categoryId, ids) {
     const restaurant = await this.ownerRestaurant(userId);
-    if (!await this.menus.findCategory(categoryId, restaurant.id)) {
+    if (!(await this.menus.findCategory(categoryId, restaurant.id))) {
       throw new AppError(400, 'INVALID_CATEGORY', 'Category does not belong to this restaurant');
     }
-    if (!await this.menus.reorderItems(restaurant.id, categoryId, ids)) {
-      throw new AppError(400, 'INVALID_REORDER', 'Item IDs must exactly match the items in the specified category');
+    if (!(await this.menus.reorderItems(restaurant.id, categoryId, ids))) {
+      throw new AppError(
+        400,
+        'INVALID_REORDER',
+        'Item IDs must exactly match the items in the specified category',
+      );
     }
     return this.menus.listItems(restaurant.id, { category_id: categoryId });
   }
@@ -133,6 +156,9 @@ export class MenuService {
     const restaurant = await this.restaurants.findPublishedById(restaurantId);
     if (!restaurant) throw notFound('RESTAURANT_NOT_FOUND', 'Published restaurant not found');
     const categories = await this.menus.getPublicMenu(restaurant.id);
-    return { restaurant: { id: restaurant.id, name: restaurant.name, currency: restaurant.currency }, categories };
+    return {
+      restaurant: { id: restaurant.id, name: restaurant.name, currency: restaurant.currency },
+      categories,
+    };
   }
 }

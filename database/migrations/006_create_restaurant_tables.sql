@@ -1,6 +1,6 @@
 CREATE TABLE restaurant_tables (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  restaurant_id UUID NOT NULL REFERENCES restaurants(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  restaurant_id UUID NOT NULL REFERENCES restaurants (id) ON UPDATE CASCADE ON DELETE RESTRICT,
   name VARCHAR(100) NOT NULL CHECK (btrim(name) <> ''),
   code VARCHAR(20) NOT NULL CHECK (code ~ '^[A-Z0-9_-]+$'),
   qr_token UUID NOT NULL UNIQUE,

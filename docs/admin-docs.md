@@ -42,7 +42,9 @@ The backward-compatible `/api/admin/users` routes retain existing user/role mana
 - total, active, and published restaurants;
 - total menu items;
 - total restaurant tables;
-- menu views, video opens, and show-waiter intent events from the latest 30 days.
+- menu views, video opens, and show-waiter intent events for the requested range.
+
+The optional `from` and `to` query parameters use `YYYY-MM-DD`, are inclusive, and may span at most 365 days. Without them the dashboard uses the latest 30-day window. The response includes the effective UTC range.
 
 Engagement values are aggregated from `analytics_events`; they are not mocked or stored counters. `videoViews` currently means `VIDEO_OPEN`, and `showWaiterEvents` represents intent rather than completed orders.
 
@@ -66,19 +68,19 @@ Recorded actions are `OWNER_STATUS_CHANGED`, `RESTAURANT_STATUS_CHANGED`, `OWNER
 
 All endpoints require an authenticated, active admin.
 
-| Method | URL | Query/body | Result | Common errors |
-|---|---|---|---|---|
-| GET | `/api/admin/dashboard` | no query parameters | platform counts | `401`, `403` |
-| GET | `/api/admin/restaurants` | `page`, `limit`, `status`, `published`, `search` | restaurants plus pagination | validation errors |
-| GET | `/api/admin/restaurants/:id` | UUID path | profile, owner and content counts | `RESTAURANT_NOT_FOUND` |
-| PATCH | `/api/admin/restaurants/:id/status` | `{ "status": "suspended" }` | updated restaurant | validation, not found |
-| GET | `/api/admin/owners` | `page`, `limit`, `status`, `search` | owners plus pagination | validation errors |
-| GET | `/api/admin/owners/:id` | UUID path | owner and restaurant summary | `OWNER_NOT_FOUND` |
-| PATCH | `/api/admin/owners/:id/status` | `{ "status": "disabled" }` | updated owner | validation, not found |
-| GET | `/api/admin/users` | `page`, `limit` | backward-compatible user list | validation errors |
-| GET | `/api/admin/users/:id` | UUID path | local user | `USER_NOT_FOUND` |
-| PATCH | `/api/admin/users/:id/status` | allowed status | updated user | self/last-admin protection |
-| PATCH | `/api/admin/users/:id/role` | `{ "role": "owner\|admin" }` | updated user | self/last-admin protection |
+| Method | URL                                 | Query/body                                       | Result                              | Common errors                      |
+| ------ | ----------------------------------- | ------------------------------------------------ | ----------------------------------- | ---------------------------------- |
+| GET    | `/api/admin/dashboard`              | optional `from`, `to` dates                      | platform counts and effective range | `INVALID_DATE_RANGE`, `401`, `403` |
+| GET    | `/api/admin/restaurants`            | `page`, `limit`, `status`, `published`, `search` | restaurants plus pagination         | validation errors                  |
+| GET    | `/api/admin/restaurants/:id`        | UUID path                                        | profile, owner and content counts   | `RESTAURANT_NOT_FOUND`             |
+| PATCH  | `/api/admin/restaurants/:id/status` | `{ "status": "suspended" }`                      | updated restaurant                  | validation, not found              |
+| GET    | `/api/admin/owners`                 | `page`, `limit`, `status`, `search`              | owners plus pagination              | validation errors                  |
+| GET    | `/api/admin/owners/:id`             | UUID path                                        | owner and restaurant summary        | `OWNER_NOT_FOUND`                  |
+| PATCH  | `/api/admin/owners/:id/status`      | `{ "status": "disabled" }`                       | updated owner                       | validation, not found              |
+| GET    | `/api/admin/users`                  | `page`, `limit`                                  | backward-compatible user list       | validation errors                  |
+| GET    | `/api/admin/users/:id`              | UUID path                                        | local user                          | `USER_NOT_FOUND`                   |
+| PATCH  | `/api/admin/users/:id/status`       | allowed status                                   | updated user                        | self/last-admin protection         |
+| PATCH  | `/api/admin/users/:id/role`         | `{ "role": "owner\|admin" }`                     | updated user                        | self/last-admin protection         |
 
 List responses use:
 

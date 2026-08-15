@@ -1,7 +1,8 @@
 import { Router } from 'express';
+
+import { requireActiveAccount, requireRole } from '../auth/auth.middleware.js';
 import { asyncHandler } from '../shared/async-handler.js';
 import { validate } from '../shared/validate.js';
-import { requireActiveAccount, requireRole } from '../auth/auth.middleware.js';
 import { createRestaurantSchema, updateRestaurantSchema } from './restaurant.validation.js';
 
 export function restaurantRoutes(controller, requireAuth) {

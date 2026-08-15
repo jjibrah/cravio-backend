@@ -59,34 +59,34 @@ All endpoints below require an authenticated, active owner.
 
 ### Categories
 
-| Method | URL | Request | Response | Common errors |
-|---|---|---|---|---|
-| POST | `/api/menu/categories` | `{ "name", "description"?, "is_active"? }` | `201` category | `RESTAURANT_NOT_FOUND`, `CATEGORY_NAME_EXISTS` |
-| GET | `/api/menu/categories` | none | ordered categories | `RESTAURANT_NOT_FOUND` |
-| GET | `/api/menu/categories/:id` | none | category | `CATEGORY_NOT_FOUND` |
-| PATCH | `/api/menu/categories/:id` | any safe category fields | updated category | `CATEGORY_NOT_FOUND`, `CATEGORY_NAME_EXISTS` |
-| DELETE | `/api/menu/categories/:id` | none | `204` | `CATEGORY_NOT_FOUND`, `CATEGORY_HAS_ITEMS` |
-| POST | `/api/menu/categories/reorder` | `{ "category_ids": [uuid, ...] }` | ordered categories | `INVALID_REORDER` |
+| Method | URL                            | Request                                    | Response           | Common errors                                  |
+| ------ | ------------------------------ | ------------------------------------------ | ------------------ | ---------------------------------------------- |
+| POST   | `/api/menu/categories`         | `{ "name", "description"?, "is_active"? }` | `201` category     | `RESTAURANT_NOT_FOUND`, `CATEGORY_NAME_EXISTS` |
+| GET    | `/api/menu/categories`         | none                                       | ordered categories | `RESTAURANT_NOT_FOUND`                         |
+| GET    | `/api/menu/categories/:id`     | none                                       | category           | `CATEGORY_NOT_FOUND`                           |
+| PATCH  | `/api/menu/categories/:id`     | any safe category fields                   | updated category   | `CATEGORY_NOT_FOUND`, `CATEGORY_NAME_EXISTS`   |
+| DELETE | `/api/menu/categories/:id`     | none                                       | `204`              | `CATEGORY_NOT_FOUND`, `CATEGORY_HAS_ITEMS`     |
+| POST   | `/api/menu/categories/reorder` | `{ "category_ids": [uuid, ...] }`          | ordered categories | `INVALID_REORDER`                              |
 
 Protected fields such as `id`, `restaurant_id`, `display_order`, and timestamps are rejected.
 
 ### Menu items
 
-| Method | URL | Request | Response | Common errors |
-|---|---|---|---|---|
-| POST | `/api/menu/items` | `{ "category_id", "name", "description"?, "price", "is_available"?, "is_active"? }` | `201` item | `INVALID_CATEGORY` |
-| GET | `/api/menu/items` | optional `category_id`, `available=true|false` | ordered items | `INVALID_CATEGORY` |
-| GET | `/api/menu/items/:id` | none | item | `MENU_ITEM_NOT_FOUND` |
-| PATCH | `/api/menu/items/:id` | any safe item fields | updated item | `MENU_ITEM_NOT_FOUND`, `INVALID_CATEGORY` |
-| DELETE | `/api/menu/items/:id` | none | deactivated item | `MENU_ITEM_NOT_FOUND` |
-| PATCH | `/api/menu/items/:id/availability` | `{ "is_available": false }` | updated item | `MENU_ITEM_NOT_FOUND` |
-| POST | `/api/menu/items/reorder` | `{ "category_id", "item_ids": [uuid, ...] }` | ordered category items | `INVALID_CATEGORY`, `INVALID_REORDER` |
+| Method | URL                                | Request                                                                             | Response               | Common errors                             |
+| ------ | ---------------------------------- | ----------------------------------------------------------------------------------- | ---------------------- | ----------------------------------------- |
+| POST   | `/api/menu/items`                  | `{ "category_id", "name", "description"?, "price", "is_available"?, "is_active"? }` | `201` item             | `INVALID_CATEGORY`                        |
+| GET    | `/api/menu/items`                  | optional `category_id`, `available=true                                             | false`                 | ordered items                             | `INVALID_CATEGORY` |
+| GET    | `/api/menu/items/:id`              | none                                                                                | item                   | `MENU_ITEM_NOT_FOUND`                     |
+| PATCH  | `/api/menu/items/:id`              | any safe item fields                                                                | updated item           | `MENU_ITEM_NOT_FOUND`, `INVALID_CATEGORY` |
+| DELETE | `/api/menu/items/:id`              | none                                                                                | deactivated item       | `MENU_ITEM_NOT_FOUND`                     |
+| PATCH  | `/api/menu/items/:id/availability` | `{ "is_available": false }`                                                         | updated item           | `MENU_ITEM_NOT_FOUND`                     |
+| POST   | `/api/menu/items/reorder`          | `{ "category_id", "item_ids": [uuid, ...] }`                                        | ordered category items | `INVALID_CATEGORY`, `INVALID_REORDER`     |
 
 Protected fields such as `id`, `restaurant_id`, `display_order`, and timestamps are rejected.
 
 ## Public-menu service
 
-`MenuService.getPublicMenu(restaurantId)` is reusable by a future diner-facing router. It requires an active, published restaurant and returns active categories in display order with active items in display order. Unavailable items remain present with `is_available: false`. No public route is added in Menu V1.
+The Public Diner Menu module reuses ordered menu queries and exposes them at `GET /api/public/menu/:qrToken`. It requires an active table and active, published restaurant, returns active categories/items in display order, and keeps unavailable items with `is_available: false`.
 
 ## Database
 
@@ -102,6 +102,6 @@ npm run typecheck
 
 Tests use in-memory repositories for route and authorization behavior and an injected transaction client for rollback verification. They do not call Clerk or external services.
 
-## Future integration
+## Integrations
 
-The future Media module can reference `menu_items.id` for video assets; upload behavior does not belong here. Analytics can retain references because items are deactivated instead of deleted. A future Public Menu router can expose the existing public-menu service after applying its public response contract.
+Media records reference `menu_items.id`, while upload and processing remain outside Menu. Public Menu returns ready public-safe media fields. Analytics retains menu-item/category references and reports engagement; item deactivation preserves those historical relationships.
