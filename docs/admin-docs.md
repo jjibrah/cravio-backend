@@ -41,9 +41,10 @@ The backward-compatible `/api/admin/users` routes retain existing user/role mana
 - total and active owners;
 - total, active, and published restaurants;
 - total menu items;
-- total restaurant tables.
+- total restaurant tables;
+- menu views, video opens, and show-waiter intent events from the latest 30 days.
 
-The Analytics module does not exist yet, so engagement metrics and date-range filtering are intentionally omitted rather than mocked.
+Engagement values are aggregated from `analytics_events`; they are not mocked or stored counters. `videoViews` currently means `VIDEO_OPEN`, and `showWaiterEvents` represents intent rather than completed orders.
 
 ## Audit logging
 

@@ -32,6 +32,10 @@ import { AdminRepository } from './admin/admin.repository.js';
 import { AdminService } from './admin/admin.service.js';
 import { createAdminController } from './admin/admin.controller.js';
 import { createAdminRouter } from './admin/admin.routes.js';
+import { AnalyticsRepository } from './analytics/analytics.repository.js';
+import { AnalyticsService } from './analytics/analytics.service.js';
+import { createAnalyticsController } from './analytics/analytics.controller.js';
+import { createAnalyticsRouter, createPublicAnalyticsRouter } from './analytics/analytics.routes.js';
 
 /** @param {any} [options] */
 export function createApp(options = {}) {
@@ -39,7 +43,7 @@ export function createApp(options = {}) {
     db = pool, authResolver, clerkAuthMiddleware, webhookVerifier, userRepository,
     restaurantRepository, menuRepository, mediaRepository, mediaStorage, mediaLimits,
     tableRepository, qrService, publicAppUrl, publicMenuRepository, publicMenuLimiter,
-    adminRepository
+    adminRepository, analyticsRepository, analyticsLimiters
   } = options;
   const app = express();
   app.use(helmet());
@@ -64,10 +68,13 @@ export function createApp(options = {}) {
   const publicMenuController = createPublicMenuController(new PublicMenuService({ publicMenus, tables: tableService }));
   const adminData = adminRepository || new AdminRepository(db);
   const adminController = createAdminController(new AdminService({ admin: adminData, users }));
+  const analytics = analyticsRepository || new AnalyticsRepository(db);
+  const analyticsController = createAnalyticsController(new AnalyticsService({ analytics, tables: tableService, restaurants }));
 
   // Public diner routes intentionally run before Clerk middleware.
   app.use('/api/public/qr', createPublicQrRouter(tableController));
   app.use('/api/public/menu', createPublicMenuRouter({ controller: publicMenuController, limiter: publicMenuLimiter }));
+  app.use('/api/public/analytics', createPublicAnalyticsRouter({ controller: analyticsController, limits: analyticsLimiters }));
   app.use(clerkAuthMiddleware || clerkMiddleware());
 
   app.use('/api/users', createUserRouter({ auth, controller: userController }));
@@ -75,6 +82,7 @@ export function createApp(options = {}) {
   app.use('/api/menu', createMenuRouter({ auth, controller }));
   app.use('/api/media', createMediaRouter({ auth, controller: mediaController }));
   app.use('/api/tables', createTableRouter({ auth, controller: tableController }));
+  app.use('/api/analytics', createAnalyticsRouter({ auth, controller: analyticsController }));
   app.use(notFoundHandler);
   app.use(errorHandler);
   return app;

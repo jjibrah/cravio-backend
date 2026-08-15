@@ -41,7 +41,7 @@ export function testApp(options = {}) {
     users = new MemoryUsers(), authUserId = owner.clerk_user_id, authError, webhookVerifier,
     restaurantRepository, menuRepository, mediaRepository, mediaStorage, mediaLimits,
     tableRepository, qrService, publicAppUrl, publicMenuRepository, publicMenuLimiter,
-    clerkMiddleware, adminRepository
+    clerkMiddleware, adminRepository, analyticsRepository, analyticsLimiters
   } = options;
   const adminData = adminRepository || new MemoryAdminRepository(users);
   return { users, app: createApp({
@@ -60,6 +60,8 @@ export function testApp(options = {}) {
     publicAppUrl,
     publicMenuRepository,
     publicMenuLimiter,
-    adminRepository: adminData
+    adminRepository: adminData,
+    analyticsRepository,
+    analyticsLimiters
   }) };
 }

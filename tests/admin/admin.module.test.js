@@ -17,7 +17,7 @@ class AdminFixture extends MemoryAdminRepository {
   async changeRestaurantStatus(adminId, id, status) { const row = this.restaurants.find((x) => x.id === id); if (!row) return null; const old = row.status; row.status = status; this.audits.push({ admin_user_id: adminId, action: 'RESTAURANT_STATUS_CHANGED', target_type: 'restaurant', target_id: id, old_values: { status: old }, new_values: { status } }); return row; }
   async listOwners({ page, limit, status, search }) { const values = this.users.rows.filter((u) => u.role === 'owner').map((u) => ({ id: u.id, email: u.email, first_name: u.first_name, last_name: u.last_name, role: u.role, status: u.status, created_at: u.created_at, restaurant: this.restaurants.find((r) => r.owner_id === u.id) || null })).filter((u) => (!status || u.status === status) && (!search || `${u.first_name} ${u.last_name} ${u.email} ${u.restaurant?.name || ''}`.toLowerCase().includes(search.toLowerCase()))); return { items: values.slice((page - 1) * limit, page * limit), total: values.length }; }
   async getOwner(id) { const u = this.users.rows.find((value) => value.id === id && value.role === 'owner'); return u ? { id: u.id, email: u.email, first_name: u.first_name, last_name: u.last_name, role: u.role, status: u.status, created_at: u.created_at, updated_at: u.updated_at, restaurant: this.restaurants.find((r) => r.owner_id === id) || null } : null; }
-  async metrics() { return { total_owners: this.users.rows.filter((u) => u.role === 'owner').length, active_owners: this.users.rows.filter((u) => u.role === 'owner' && u.status === 'active').length, total_restaurants: this.restaurants.length, active_restaurants: this.restaurants.filter((r) => r.status === 'active').length, published_restaurants: this.restaurants.filter((r) => r.is_published).length, total_menu_items: this.menuItems, total_tables: this.tables }; }
+  async metrics() { return { total_owners: this.users.rows.filter((u) => u.role === 'owner').length, active_owners: this.users.rows.filter((u) => u.role === 'owner' && u.status === 'active').length, total_restaurants: this.restaurants.length, active_restaurants: this.restaurants.filter((r) => r.status === 'active').length, published_restaurants: this.restaurants.filter((r) => r.is_published).length, total_menu_items: this.menuItems, total_tables: this.tables, menu_views: 25, video_views: 12, show_waiter_events: 4 }; }
 }
 
 /** @param {{ authUserId?: string | null, users?: MemoryUsers, fixture?: AdminFixture }} [options] */
@@ -32,9 +32,9 @@ test('admin authorization denies unauthenticated, owner, suspended admin, and di
   assert.equal((await request(setup({ authUserId: owner.clerk_user_id }).app).get('/api/admin/dashboard')).status, 403);
   for (const status of ['suspended', 'disabled']) { const users = new MemoryUsers([owner, { ...admin, status }]); assert.equal((await request(setup({ users }).app).get('/api/admin/dashboard')).status, 403); }
 });
-test('dashboard returns accurate basic platform metrics without fake engagement data', async () => {
+test('dashboard returns accurate platform and 30-day engagement metrics', async () => {
   const response = await request(setup().app).get('/api/admin/dashboard');
-  assert.equal(response.status, 200); assert.deepEqual(response.body.data, { users: { totalOwners: 2, activeOwners: 1 }, restaurants: { total: 2, active: 1, published: 1 }, content: { menuItems: 10, tables: 5 } }); assert.equal(response.body.data.engagement, undefined);
+  assert.equal(response.status, 200); assert.deepEqual(response.body.data, { users: { totalOwners: 2, activeOwners: 1 }, restaurants: { total: 2, active: 1, published: 1 }, content: { menuItems: 10, tables: 5 }, engagement: { menuViews: 25, videoViews: 12, showWaiterEvents: 4 } });
 });
 test('restaurant listing supports database-style pagination, status, published, and search filters', async () => {
   const app = setup().app;

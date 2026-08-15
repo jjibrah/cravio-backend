@@ -54,7 +54,10 @@ export class AdminRepository {
       (SELECT COUNT(*)::int FROM restaurants WHERE status='active') AS active_restaurants,
       (SELECT COUNT(*)::int FROM restaurants WHERE is_published=TRUE) AS published_restaurants,
       (SELECT COUNT(*)::int FROM menu_items) AS total_menu_items,
-      (SELECT COUNT(*)::int FROM restaurant_tables) AS total_tables`);
+      (SELECT COUNT(*)::int FROM restaurant_tables) AS total_tables,
+      (SELECT COUNT(*)::int FROM analytics_events WHERE event_type='MENU_VIEW' AND created_at >= NOW() - INTERVAL '30 days') AS menu_views,
+      (SELECT COUNT(*)::int FROM analytics_events WHERE event_type='VIDEO_OPEN' AND created_at >= NOW() - INTERVAL '30 days') AS video_views,
+      (SELECT COUNT(*)::int FROM analytics_events WHERE event_type='SHOW_WAITER' AND created_at >= NOW() - INTERVAL '30 days') AS show_waiter_events`);
     return rows[0];
   }
   async changeRestaurantStatus(adminId, id, status) { return this.changeWithAudit({ adminId, table: 'restaurants', id, status, action: 'RESTAURANT_STATUS_CHANGED', targetType: 'restaurant' }); }
