@@ -83,21 +83,26 @@ CREATE TABLE IF NOT EXISTS media_assets (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   restaurant_id UUID NOT NULL REFERENCES restaurants(id) ON UPDATE CASCADE ON DELETE RESTRICT,
   menu_item_id UUID NOT NULL,
-  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'ready', 'failed', 'deleted')),
+  media_type TEXT NOT NULL DEFAULT 'video' CHECK (media_type = 'video'),
+  status TEXT NOT NULL DEFAULT 'processing' CHECK (status IN ('processing', 'ready', 'failed', 'deleted')),
   video_storage_key TEXT NOT NULL UNIQUE CHECK (btrim(video_storage_key) <> ''),
   video_url TEXT,
   thumbnail_storage_key TEXT UNIQUE,
   thumbnail_url TEXT,
-  mime_type TEXT NOT NULL CHECK (mime_type IN ('video/mp4', 'video/webm', 'video/quicktime')),
+  original_filename VARCHAR(255),
+  mime_type TEXT NOT NULL CHECK (mime_type IN ('video/mp4', 'video/webm')),
   size_bytes BIGINT CHECK (size_bytes > 0),
-  duration_ms INTEGER CHECK (duration_ms > 0 AND duration_ms <= 3600000),
+  duration_seconds NUMERIC(8,3) CHECK (duration_seconds > 0 AND duration_seconds <= 120),
+  width INTEGER,
+  height INTEGER,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT media_assets_item_restaurant_fk
     FOREIGN KEY (menu_item_id, restaurant_id)
     REFERENCES menu_items(id, restaurant_id)
     ON UPDATE CASCADE ON DELETE RESTRICT,
-  CONSTRAINT media_assets_ready_fields_check CHECK (status <> 'ready' OR (video_url IS NOT NULL AND size_bytes IS NOT NULL))
+  CONSTRAINT media_assets_ready_fields_check CHECK (status <> 'ready' OR (video_url IS NOT NULL AND thumbnail_url IS NOT NULL AND size_bytes IS NOT NULL AND duration_seconds IS NOT NULL)),
+  CONSTRAINT media_assets_dimensions_check CHECK ((width IS NULL AND height IS NULL) OR (width > 0 AND height > 0))
 );
 
 -- Restaurant tables use stable, globally unique public QR tokens. Deactivation
@@ -171,8 +176,9 @@ CREATE INDEX IF NOT EXISTS menu_categories_restaurant_order_idx ON menu_categori
 CREATE INDEX IF NOT EXISTS menu_items_restaurant_idx ON menu_items (restaurant_id);
 CREATE INDEX IF NOT EXISTS menu_items_category_order_idx ON menu_items (category_id, display_order);
 CREATE INDEX IF NOT EXISTS menu_items_restaurant_active_idx ON menu_items (restaurant_id, is_active);
-CREATE INDEX IF NOT EXISTS media_assets_item_ready_idx ON media_assets (menu_item_id, updated_at DESC) WHERE status = 'ready';
+CREATE UNIQUE INDEX IF NOT EXISTS media_assets_one_ready_per_item_idx ON media_assets (menu_item_id) WHERE status = 'ready';
 CREATE INDEX IF NOT EXISTS media_assets_restaurant_idx ON media_assets (restaurant_id);
+CREATE INDEX IF NOT EXISTS media_assets_status_idx ON media_assets (status);
 CREATE INDEX IF NOT EXISTS restaurant_tables_restaurant_active_idx ON restaurant_tables (restaurant_id, is_active);
 CREATE INDEX IF NOT EXISTS restaurants_published_idx ON restaurants (is_published);
 CREATE INDEX IF NOT EXISTS admin_audit_logs_admin_idx ON admin_audit_logs (admin_user_id, created_at DESC);

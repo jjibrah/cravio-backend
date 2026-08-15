@@ -43,7 +43,7 @@ Invalid tokens, inactive tables, and unavailable restaurants all return the same
 
 Prices are returned unchanged from PostgreSQL `NUMERIC(12,2)` values, with currency provided once at restaurant level. No money calculations occur here.
 
-For each item, the query selects the newest `ready` Media asset and returns only `video_url` and `thumbnail_url`. Storage keys, bucket names, MIME metadata, and provider details are never exposed. Items without ready media return `media: null` and remain usable.
+For each item, the query selects the single `ready` Media asset and returns only `video_url`, `thumbnail_url`, and `duration_seconds`. Storage keys, bucket names, MIME metadata, and provider details are never exposed. Items without ready media return `media: null` and remain usable.
 
 ## Public response
 
@@ -81,7 +81,8 @@ For each item, the query selects the newest `ready` Media asset and returns only
             "display_order": 1,
             "media": {
               "thumbnail_url": "https://cdn.example/pasta.webp",
-              "video_url": "https://cdn.example/pasta.mp4"
+              "video_url": "https://cdn.example/pasta.mp4",
+              "duration_seconds": 24.5
             }
           }
         ]

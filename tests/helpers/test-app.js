@@ -39,7 +39,7 @@ export class MemoryAdminRepository {
 export function testApp(options = {}) {
   const {
     users = new MemoryUsers(), authUserId = owner.clerk_user_id, authError, webhookVerifier,
-    restaurantRepository, menuRepository, mediaRepository, mediaStorage, mediaLimits,
+    restaurantRepository, menuRepository, mediaRepository, mediaStorage, mediaLimits, mediaProcessor, mediaUploadLimiter,
     tableRepository, qrService, publicAppUrl, publicMenuRepository, publicMenuLimiter,
     clerkMiddleware, adminRepository, analyticsRepository, analyticsLimiters
   } = options;
@@ -55,6 +55,8 @@ export function testApp(options = {}) {
     mediaRepository,
     mediaStorage,
     mediaLimits,
+    mediaProcessor,
+    mediaUploadLimiter,
     tableRepository,
     qrService,
     publicAppUrl,

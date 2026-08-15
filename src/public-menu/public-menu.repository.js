@@ -10,11 +10,11 @@ export class PublicMenuRepository {
   async findMenuRows(restaurantId, availableOnly) {
     const { rows } = await this.db.query(`SELECT c.id AS category_id,c.name AS category_name,c.description AS category_description,c.display_order AS category_order,
       i.id AS item_id,i.name AS item_name,i.description AS item_description,i.price,i.is_available,i.display_order AS item_order,
-      media.video_url,media.thumbnail_url
+      media.video_url,media.thumbnail_url,media.duration_seconds
       FROM menu_categories c
       JOIN menu_items i ON i.category_id=c.id AND i.restaurant_id=c.restaurant_id AND i.is_active=TRUE
       LEFT JOIN LATERAL (
-        SELECT m.video_url,m.thumbnail_url FROM media_assets m
+        SELECT m.video_url,m.thumbnail_url,m.duration_seconds FROM media_assets m
         WHERE m.menu_item_id=i.id AND m.restaurant_id=i.restaurant_id AND m.status='ready'
         ORDER BY m.updated_at DESC LIMIT 1
       ) media ON TRUE

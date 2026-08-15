@@ -15,7 +15,7 @@ export class PublicMenuService {
       category.items.push({
         id: row.item_id, name: row.item_name, description: row.item_description, price: row.price,
         is_available: row.is_available, display_order: row.item_order,
-        media: row.video_url || row.thumbnail_url ? { thumbnail_url: row.thumbnail_url || null, video_url: row.video_url || null } : null
+        media: row.video_url || row.thumbnail_url ? { thumbnail_url: row.thumbnail_url || null, video_url: row.video_url || null, duration_seconds: row.duration_seconds === undefined ? null : Number(row.duration_seconds) } : null
       });
     }
     return categories;

@@ -30,7 +30,7 @@ class MemoryPublicMenus {
   }
 }
 
-const row = (overrides) => ({ category_id: categoryA, category_name: 'Mains', category_description: 'Main dishes', category_order: 2, category_active: true, item_id: itemAvailable, item_name: 'Pasta', item_description: 'Truffle pasta', price: '32.00', is_available: true, item_active: true, item_order: 2, video_url: 'https://cdn.test/pasta.mp4', thumbnail_url: 'https://cdn.test/pasta.webp', ...overrides });
+const row = (overrides) => ({ category_id: categoryA, category_name: 'Mains', category_description: 'Main dishes', category_order: 2, category_active: true, item_id: itemAvailable, item_name: 'Pasta', item_description: 'Truffle pasta', price: '32.00', is_available: true, item_active: true, item_order: 2, video_url: 'https://cdn.test/pasta.mp4', thumbnail_url: 'https://cdn.test/pasta.webp', duration_seconds: '24.500', ...overrides });
 
 function setup(overrides = {}) {
   const state = { token, tableActive: true, restaurantStatus: 'active', published: true, rows: [
@@ -58,7 +58,7 @@ test('public menu requires no authentication and returns ordered restaurant, tab
   assert.deepEqual(response.body.data.categories.map((x) => x.name), ['Drinks', 'Mains']);
   assert.deepEqual(response.body.data.categories[1].items.map((x) => x.name), ['Sold Out Dish', 'Pasta']);
   assert.equal(response.body.data.categories[1].items[0].is_available, false); assert.equal(response.body.data.categories[1].items[1].price, '32.00');
-  assert.deepEqual(response.body.data.categories[1].items[1].media, { thumbnail_url: 'https://cdn.test/pasta.webp', video_url: 'https://cdn.test/pasta.mp4' });
+  assert.deepEqual(response.body.data.categories[1].items[1].media, { thumbnail_url: 'https://cdn.test/pasta.webp', video_url: 'https://cdn.test/pasta.mp4', duration_seconds: 24.5 });
   assert.equal(response.body.data.categories[0].items[0].media, null); assert.equal(setupData.publicMenus.calls, 2);
 });
 test('availability filter returns only active available items and invalid values are rejected', async () => {

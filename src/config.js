@@ -16,7 +16,11 @@ export const config = {
     publicBaseUrl: process.env.MEDIA_PUBLIC_BASE_URL,
     uploadExpiresSeconds: Number(process.env.MEDIA_UPLOAD_EXPIRES_SECONDS || 900),
     maxVideoBytes: Number(process.env.MEDIA_MAX_VIDEO_BYTES || 104857600),
-    maxThumbnailBytes: Number(process.env.MEDIA_MAX_THUMBNAIL_BYTES || 5242880)
+    maxThumbnailBytes: Number(process.env.MEDIA_MAX_THUMBNAIL_BYTES || 5242880),
+    maxVideoDurationSeconds: Number(process.env.MEDIA_MAX_VIDEO_DURATION_SECONDS || 45),
+    ffmpegPath: process.env.FFMPEG_PATH || 'ffmpeg',
+    ffprobePath: process.env.FFPROBE_PATH || 'ffprobe',
+    required: (process.env.NODE_ENV || 'development') === 'production'
   },
   nodeEnv: process.env.NODE_ENV || 'development'
 };

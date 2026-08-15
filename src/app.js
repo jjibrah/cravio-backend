@@ -18,6 +18,7 @@ import { MediaService } from './media/media.service.js';
 import { createMediaController } from './media/media.controller.js';
 import { createMediaRouter } from './media/media.routes.js';
 import { createMediaStorage } from './media/media.storage.js';
+import { createVideoProcessor } from './media/video.processor.js';
 import { config } from './config.js';
 import { TableRepository } from './tables/table.repository.js';
 import { TableService } from './tables/table.service.js';
@@ -41,7 +42,7 @@ import { createAnalyticsRouter, createPublicAnalyticsRouter } from './analytics/
 export function createApp(options = {}) {
   const {
     db = pool, authResolver, clerkAuthMiddleware, webhookVerifier, userRepository,
-    restaurantRepository, menuRepository, mediaRepository, mediaStorage, mediaLimits,
+    restaurantRepository, menuRepository, mediaRepository, mediaStorage, mediaLimits, mediaProcessor, mediaUploadLimiter,
     tableRepository, qrService, publicAppUrl, publicMenuRepository, publicMenuLimiter,
     adminRepository, analyticsRepository, analyticsLimiters
   } = options;
@@ -60,7 +61,7 @@ export function createApp(options = {}) {
   const userController = createUserController(users);
   const media = mediaRepository || new MediaRepository(db);
   const storage = mediaStorage || createMediaStorage(config.media);
-  const mediaController = createMediaController(new MediaService({ media, menus, restaurants, storage, limits: mediaLimits || config.media }));
+  const mediaController = createMediaController(new MediaService({ media, menus, restaurants, storage, processor: mediaProcessor || createVideoProcessor(config.media), limits: mediaLimits || config.media }));
   const tables = tableRepository || new TableRepository(db);
   const tableService = new TableService({ tables, restaurants, qr: qrService || createQrService(), publicAppUrl: publicAppUrl || config.publicAppUrl });
   const tableController = createTableController(tableService);
@@ -80,7 +81,7 @@ export function createApp(options = {}) {
   app.use('/api/users', createUserRouter({ auth, controller: userController }));
   app.use('/api/admin', createAdminRouter({ auth, controller: adminController }));
   app.use('/api/menu', createMenuRouter({ auth, controller }));
-  app.use('/api/media', createMediaRouter({ auth, controller: mediaController }));
+  app.use('/api/media', createMediaRouter({ auth, controller: mediaController, uploadLimiter: mediaUploadLimiter }));
   app.use('/api/tables', createTableRouter({ auth, controller: tableController }));
   app.use('/api/analytics', createAnalyticsRouter({ auth, controller: analyticsController }));
   app.use(notFoundHandler);
