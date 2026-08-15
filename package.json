@@ -1,0 +1,33 @@
+{
+  "name": "cravio-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "test": "node --test --test-isolation=none",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "db:migrate": "node src/database/migrate.js"
+  },
+  "dependencies": {
+    "@clerk/backend": "^2.13.0",
+    "@clerk/express": "^2.1.56",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "pg": "^8.16.3",
+    "zod": "^4.0.17"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.33.0",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.2.0",
+    "@types/pg": "^8.21.0",
+    "@types/supertest": "^7.2.1",
+    "eslint": "^9.33.0",
+    "supertest": "^7.1.4",
+    "typescript": "^5.9.2"
+  }
+}
