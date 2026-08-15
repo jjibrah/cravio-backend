@@ -69,7 +69,9 @@ export class MenuService {
     const restaurant = await this.ownerRestaurant(userId);
     const category = await this.menus.findCategory(data.category_id, restaurant.id);
     if (!category) throw new AppError(400, 'INVALID_CATEGORY', 'Category does not belong to this restaurant');
-    return this.menus.createItem(restaurant.id, data);
+    const item = await this.menus.createItem(restaurant.id, data);
+    if (!item) throw new AppError(400, 'INVALID_CATEGORY', 'Category does not belong to this restaurant');
+    return item;
   }
 
   async listItems(userId, filters) {
@@ -93,9 +95,14 @@ export class MenuService {
     if (data.category_id && !await this.menus.findCategory(data.category_id, restaurant.id)) {
       throw new AppError(400, 'INVALID_CATEGORY', 'Category does not belong to this restaurant');
     }
-    const item = await this.menus.updateItem(id, restaurant.id, data);
-    if (!item) throw itemNotFound();
-    return item;
+    try {
+      const item = await this.menus.updateItem(id, restaurant.id, data);
+      if (!item) throw itemNotFound();
+      return item;
+    } catch (error) {
+      if (error.code === '23503') throw new AppError(400, 'INVALID_CATEGORY', 'Category does not belong to this restaurant');
+      throw error;
+    }
   }
 
   async setAvailability(userId, id, isAvailable) {

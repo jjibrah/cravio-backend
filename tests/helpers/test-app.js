@@ -24,12 +24,17 @@ export class MemoryUsers {
 
 /** @param {any} [options] */
 export function testApp(options = {}) {
-  const { users = new MemoryUsers(), authUserId = owner.clerk_user_id, authError, webhookVerifier } = options;
+  const {
+    users = new MemoryUsers(), authUserId = owner.clerk_user_id, authError, webhookVerifier,
+    restaurantRepository, menuRepository
+  } = options;
   return { users, app: createApp({
     userRepository: users,
     db: { query: async () => ({ rows: [] }) },
     clerkAuthMiddleware: (_req, _res, next) => next(),
     authResolver: () => { if (authError) throw authError; return authUserId ? { isAuthenticated: true, userId: authUserId } : { isAuthenticated: false, userId: null }; },
-    webhookVerifier
+    webhookVerifier,
+    restaurantRepository,
+    menuRepository
   }) };
 }

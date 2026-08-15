@@ -3,8 +3,8 @@ export class RestaurantRepository {
 
   async findByOwnerUserId(ownerUserId, client = this.db) {
     const { rows } = await client.query(
-      `SELECT id, owner_user_id, name, currency, is_published, created_at, updated_at
-       FROM restaurants WHERE owner_user_id = $1`,
+      `SELECT id, owner_id, name, currency, status, is_published, created_at, updated_at
+       FROM restaurants WHERE owner_id = $1`,
       [ownerUserId]
     );
     return rows[0] || null;
@@ -12,8 +12,8 @@ export class RestaurantRepository {
 
   async findPublishedById(id, client = this.db) {
     const { rows } = await client.query(
-      `SELECT id, owner_user_id, name, currency, is_published, created_at, updated_at
-       FROM restaurants WHERE id = $1 AND is_published = TRUE`,
+      `SELECT id, owner_id, name, currency, status, is_published, created_at, updated_at
+       FROM restaurants WHERE id = $1 AND status = 'active' AND is_published = TRUE`,
       [id]
     );
     return rows[0] || null;

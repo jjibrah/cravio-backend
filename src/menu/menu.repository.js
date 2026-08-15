@@ -78,7 +78,8 @@ export class MenuRepository {
 
   async createItem(restaurantId, data) {
     return this.withTransaction(async (client) => {
-      await client.query('SELECT id FROM menu_categories WHERE id = $1 AND restaurant_id = $2 FOR UPDATE', [data.category_id, restaurantId]);
+      const category = await client.query('SELECT id FROM menu_categories WHERE id = $1 AND restaurant_id = $2 FOR UPDATE', [data.category_id, restaurantId]);
+      if (!category.rowCount) return null;
       const { rows } = await client.query(
         `INSERT INTO menu_items (restaurant_id, category_id, name, description, price, display_order, is_available, is_active)
          VALUES ($1, $2, $3, $4, $5, (SELECT COALESCE(MAX(display_order), -1) + 1 FROM menu_items WHERE category_id = $2), $6, $7)

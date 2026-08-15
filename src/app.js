@@ -16,7 +16,10 @@ import { createClerkWebhookHandler } from './webhooks/clerk.webhook.js';
 
 /** @param {any} [options] */
 export function createApp(options = {}) {
-  const { db = pool, authResolver, clerkAuthMiddleware, webhookVerifier, userRepository } = options;
+  const {
+    db = pool, authResolver, clerkAuthMiddleware, webhookVerifier, userRepository,
+    restaurantRepository, menuRepository
+  } = options;
   const app = express();
   app.use(helmet());
   const users = userRepository || new UserRepository(db);
@@ -25,8 +28,8 @@ export function createApp(options = {}) {
   app.use(express.json({ limit: '100kb' }));
   app.use(clerkAuthMiddleware || clerkMiddleware());
 
-  const restaurants = new RestaurantRepository(db);
-  const menus = new MenuRepository(db);
+  const restaurants = restaurantRepository || new RestaurantRepository(db);
+  const menus = menuRepository || new MenuRepository(db);
   const service = new MenuService({ menus, restaurants });
   const controller = createMenuController(service);
   const auth = createAuthMiddleware({ users, authResolver });
