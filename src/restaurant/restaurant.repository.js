@@ -4,6 +4,8 @@ const columns = columnNames.join(', ');
 
 export class RestaurantRepository {
   constructor(db) { this.db = db; }
+  async findByOwnerUserId(ownerId) { return this.findByOwnerId(ownerId); }
+  async findPublishedById(id) { const restaurant = await this.findById(id); return restaurant?.status === 'active' && restaurant.is_published ? restaurant : null; }
   async findByOwnerId(ownerId) {
     const { rows } = await this.db.query(`SELECT ${columns} FROM restaurants WHERE owner_id = $1`, [ownerId]);
     return rows[0] || null;

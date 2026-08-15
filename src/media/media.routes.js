@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import { rateLimit } from 'express-rate-limit';
+import { createRateLimiter } from '../core/middleware/rate-limit.js';
 import { requireActiveAccount, requireRole } from '../auth/auth.middleware.js';
 import { asyncHandler } from '../shared/async-handler.js';
 import { validate } from '../shared/validate.js';
 import { completeVideoSchema, emptySchema, itemParamsSchema, mediaParamsSchema, thumbnailUploadSchema, uploadSchema } from './media.validation.js';
 
-export const createMediaUploadLimiter = ({ limit = 20 } = {}) => rateLimit({ windowMs: 60 * 60 * 1000, limit, standardHeaders: 'draft-8', legacyHeaders: false, handler: (_req, res) => res.status(429).json({ success: false, error: { code: 'RATE_LIMITED', message: 'Too many media upload requests' } }) });
+export const createMediaUploadLimiter = ({ limit = 20 } = {}) => createRateLimiter({ windowMs: 60 * 60 * 1000, limit, message: 'Too many media upload requests' });
 export function createMediaRouter({ auth, controller, uploadLimiter = createMediaUploadLimiter() }) {
   const router = Router();
   router.use(auth, requireActiveAccount, requireRole('owner'));

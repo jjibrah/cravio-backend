@@ -62,7 +62,7 @@ export class AdminRepository {
   }
   async changeRestaurantStatus(adminId, id, status) { return this.changeWithAudit({ adminId, table: 'restaurants', id, status, action: 'RESTAURANT_STATUS_CHANGED', targetType: 'restaurant' }); }
   async changeUserStatus(adminId, id, status, action = 'OWNER_STATUS_CHANGED') { return this.changeWithAudit({ adminId, table: 'users', id, status, action, targetType: 'user' }); }
-  async changeUserRole(adminId, id, role) { return this.changeWithAudit({ adminId, table: 'users', id, role, action: 'OWNER_ROLE_CHANGED', targetType: 'user' }); }
+  async changeUserRole(adminId, id, role, action = 'OWNER_ROLE_CHANGED') { return this.changeWithAudit({ adminId, table: 'users', id, role, action, targetType: 'user' }); }
   /** @param {{ adminId: string, table: 'users'|'restaurants', id: string, status?: string, role?: string, action: string, targetType: string }} change */
   async changeWithAudit({ adminId, table, id, status, role, action, targetType }) {
     const client = await this.db.connect();

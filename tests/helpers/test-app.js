@@ -41,12 +41,14 @@ export function testApp(options = {}) {
     users = new MemoryUsers(), authUserId = owner.clerk_user_id, authError, webhookVerifier,
     restaurantRepository, menuRepository, mediaRepository, mediaStorage, mediaLimits, mediaProcessor, mediaUploadLimiter,
     tableRepository, qrService, publicAppUrl, publicMenuRepository, publicMenuLimiter,
-    clerkMiddleware, adminRepository, analyticsRepository, analyticsLimiters
+    clerkMiddleware, adminRepository, analyticsRepository, analyticsLimiters, appConfig, logger,
+    generalLimiter, adminLimiter, healthStorage, db = { query: async () => ({ rows: [] }) }
   } = options;
   const adminData = adminRepository || new MemoryAdminRepository(users);
+  const quietLogger = logger || { debug() {}, info() {}, warn() {}, error() {} };
   return { users, app: createApp({
     userRepository: users,
-    db: { query: async () => ({ rows: [] }) },
+    db,
     clerkAuthMiddleware: clerkMiddleware || ((_req, _res, next) => next()),
     authResolver: () => { if (authError) throw authError; return authUserId ? { isAuthenticated: true, userId: authUserId } : { isAuthenticated: false, userId: null }; },
     webhookVerifier,
@@ -64,6 +66,11 @@ export function testApp(options = {}) {
     publicMenuLimiter,
     adminRepository: adminData,
     analyticsRepository,
-    analyticsLimiters
+    analyticsLimiters,
+    logger: quietLogger,
+    appConfig,
+    generalLimiter,
+    adminLimiter,
+    healthStorage
   }) };
 }

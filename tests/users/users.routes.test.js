@@ -14,5 +14,5 @@ test('PATCH /api/users/me updates only safe fields', async () => {
 });
 test('PATCH /api/users/me rejects role and status mass assignment', async () => {
   const response = await request(testApp().app).patch('/api/users/me').send({ first_name: 'Okay', role: 'admin', status: 'disabled' });
-  assert.equal(response.status, 400); assert.equal(response.body.error.code, 'INVALID_REQUEST');
+  assert.equal(response.status, 400); assert.equal(response.body.error.code, 'VALIDATION_ERROR');
 });

@@ -10,7 +10,7 @@ const unavailable = () => new AppError(503, 'MEDIA_STORAGE_UNAVAILABLE', 'Media 
 export function createMediaStorage(config) {
   const ready = config.bucket && config.accessKeyId && config.secretAccessKey && config.publicBaseUrl;
   if (!ready && config.required) throw new Error('Media storage configuration is incomplete; configure bucket, credentials, and public base URL');
-  if (!ready) return { createUpload: async () => { throw unavailable(); }, inspect: async () => { throw unavailable(); }, downloadToFile: async () => { throw unavailable(); }, uploadFile: async () => { throw unavailable(); }, delete: async () => { throw unavailable(); } };
+  if (!ready) return { health: async () => false, createUpload: async () => { throw unavailable(); }, inspect: async () => { throw unavailable(); }, downloadToFile: async () => { throw unavailable(); }, uploadFile: async () => { throw unavailable(); }, delete: async () => { throw unavailable(); } };
   const client = new S3Client({
     region: config.region,
     endpoint: config.endpoint || undefined,
@@ -19,6 +19,7 @@ export function createMediaStorage(config) {
   });
   const publicBase = config.publicBaseUrl.replace(/\/$/, '');
   return {
+    async health() { return true; },
     async createUpload({ key, contentType }) {
       const command = new PutObjectCommand({ Bucket: config.bucket, Key: key, ContentType: contentType });
       return { url: await getSignedUrl(client, command, { expiresIn: config.uploadExpiresSeconds }), method: 'PUT', headers: { 'content-type': contentType }, expires_in: config.uploadExpiresSeconds };

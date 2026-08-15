@@ -27,6 +27,6 @@ export const requireRole = (...roles) => (req, _res, next) => roles.includes(req
 
 export const requireActiveAccount = (req, _res, next) => {
   if (req.auth.user.status === 'active') return next();
-  const message = req.auth.user.status === 'disabled' ? 'Account is disabled' : 'Account is suspended';
-  return next(new AppError(403, 'ACCOUNT_INACTIVE', message));
+  const disabled = req.auth.user.status === 'disabled';
+  return next(new AppError(403, disabled ? 'ACCOUNT_DISABLED' : 'ACCOUNT_SUSPENDED', disabled ? 'Account is disabled' : 'Account is suspended'));
 };

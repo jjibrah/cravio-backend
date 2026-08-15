@@ -22,6 +22,6 @@ export class AdminService {
     const target = await this.getUser(id);
     if (adminId === id && role !== 'admin') throw new AppError(409, 'SELF_ROLE_CHANGE_FORBIDDEN', 'Admins cannot demote themselves');
     if (target.role === 'admin' && role !== 'admin' && target.status === 'active' && await this.admin.countActiveAdmins() <= 1) throw new AppError(409, 'LAST_ADMIN_PROTECTION', 'The last active admin cannot be demoted');
-    return this.admin.changeUserRole(adminId, id, role);
+    return this.admin.changeUserRole(adminId, id, role, target.role === 'admin' ? 'ADMIN_ROLE_CHANGED' : 'OWNER_ROLE_CHANGED');
   }
 }
