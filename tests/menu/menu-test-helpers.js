@@ -46,10 +46,10 @@ export class MemoryMenus {
   }
 }
 
-/** @param {{ authUserId?: string | null, users?: import('../helpers/test-app.js').MemoryUsers, restaurants?: MemoryRestaurants, menus?: MemoryMenus }} [options] */
+/** @param {{ authUserId?: string | null, users?: import('../helpers/test-app.js').MemoryUsers, restaurants?: MemoryRestaurants, menus?: MemoryMenus, mediaRepository?: any, mediaStorage?: any, mediaLimits?: any }} [options] */
 export function menuApp(options = {}) {
-  const { authUserId = owner.clerk_user_id, users, restaurants = new MemoryRestaurants(), menus = new MemoryMenus() } = options;
-  const setup = testApp({ users, authUserId, restaurantRepository: restaurants, menuRepository: menus });
+  const { authUserId = owner.clerk_user_id, users, restaurants = new MemoryRestaurants(), menus = new MemoryMenus(), mediaRepository, mediaStorage, mediaLimits } = options;
+  const setup = testApp({ users, authUserId, restaurantRepository: restaurants, menuRepository: menus, mediaRepository, mediaStorage, mediaLimits });
   return { ...setup, restaurants, menus };
 }
 

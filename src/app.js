@@ -13,12 +13,18 @@ import { errorHandler, notFoundHandler } from './shared/error-handler.js';
 import { createUserController } from './users/user.controller.js';
 import { createAdminUserRouter, createUserRouter } from './users/user.routes.js';
 import { createClerkWebhookHandler } from './webhooks/clerk.webhook.js';
+import { MediaRepository } from './media/media.repository.js';
+import { MediaService } from './media/media.service.js';
+import { createMediaController } from './media/media.controller.js';
+import { createMediaRouter } from './media/media.routes.js';
+import { createMediaStorage } from './media/media.storage.js';
+import { config } from './config.js';
 
 /** @param {any} [options] */
 export function createApp(options = {}) {
   const {
     db = pool, authResolver, clerkAuthMiddleware, webhookVerifier, userRepository,
-    restaurantRepository, menuRepository
+    restaurantRepository, menuRepository, mediaRepository, mediaStorage, mediaLimits
   } = options;
   const app = express();
   app.use(helmet());
@@ -34,10 +40,14 @@ export function createApp(options = {}) {
   const controller = createMenuController(service);
   const auth = createAuthMiddleware({ users, authResolver });
   const userController = createUserController(users);
+  const media = mediaRepository || new MediaRepository(db);
+  const storage = mediaStorage || createMediaStorage(config.media);
+  const mediaController = createMediaController(new MediaService({ media, menus, restaurants, storage, limits: mediaLimits || config.media }));
 
   app.use('/api/users', createUserRouter({ auth, controller: userController }));
   app.use('/api/admin/users', createAdminUserRouter({ auth, controller: userController }));
   app.use('/api/menu', createMenuRouter({ auth, controller }));
+  app.use('/api/media', createMediaRouter({ auth, controller: mediaController }));
   app.use(notFoundHandler);
   app.use(errorHandler);
   return app;

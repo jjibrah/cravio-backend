@@ -26,7 +26,7 @@ export class MemoryUsers {
 export function testApp(options = {}) {
   const {
     users = new MemoryUsers(), authUserId = owner.clerk_user_id, authError, webhookVerifier,
-    restaurantRepository, menuRepository
+    restaurantRepository, menuRepository, mediaRepository, mediaStorage, mediaLimits
   } = options;
   return { users, app: createApp({
     userRepository: users,
@@ -35,6 +35,9 @@ export function testApp(options = {}) {
     authResolver: () => { if (authError) throw authError; return authUserId ? { isAuthenticated: true, userId: authUserId } : { isAuthenticated: false, userId: null }; },
     webhookVerifier,
     restaurantRepository,
-    menuRepository
+    menuRepository,
+    mediaRepository,
+    mediaStorage,
+    mediaLimits
   }) };
 }
