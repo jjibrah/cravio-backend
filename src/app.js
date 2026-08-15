@@ -24,13 +24,17 @@ import { TableService } from './tables/table.service.js';
 import { createTableController } from './tables/table.controller.js';
 import { createPublicQrRouter, createTableRouter } from './tables/table.routes.js';
 import { createQrService } from './tables/qr.service.js';
+import { PublicMenuRepository } from './public-menu/public-menu.repository.js';
+import { PublicMenuService } from './public-menu/public-menu.service.js';
+import { createPublicMenuController } from './public-menu/public-menu.controller.js';
+import { createPublicMenuRouter } from './public-menu/public-menu.routes.js';
 
 /** @param {any} [options] */
 export function createApp(options = {}) {
   const {
     db = pool, authResolver, clerkAuthMiddleware, webhookVerifier, userRepository,
     restaurantRepository, menuRepository, mediaRepository, mediaStorage, mediaLimits,
-    tableRepository, qrService, publicAppUrl
+    tableRepository, qrService, publicAppUrl, publicMenuRepository, publicMenuLimiter
   } = options;
   const app = express();
   app.use(helmet());
@@ -38,7 +42,6 @@ export function createApp(options = {}) {
   const webhook = createClerkWebhookHandler({ users, webhookVerifier });
   app.post('/api/webhooks/clerk', express.raw({ type: 'application/json' }), webhook);
   app.use(express.json({ limit: '100kb' }));
-  app.use(clerkAuthMiddleware || clerkMiddleware());
 
   const restaurants = restaurantRepository || new RestaurantRepository(db);
   const menus = menuRepository || new MenuRepository(db);
@@ -52,13 +55,19 @@ export function createApp(options = {}) {
   const tables = tableRepository || new TableRepository(db);
   const tableService = new TableService({ tables, restaurants, qr: qrService || createQrService(), publicAppUrl: publicAppUrl || config.publicAppUrl });
   const tableController = createTableController(tableService);
+  const publicMenus = publicMenuRepository || new PublicMenuRepository(db);
+  const publicMenuController = createPublicMenuController(new PublicMenuService({ publicMenus, tables: tableService }));
+
+  // Public diner routes intentionally run before Clerk middleware.
+  app.use('/api/public/qr', createPublicQrRouter(tableController));
+  app.use('/api/public/menu', createPublicMenuRouter({ controller: publicMenuController, limiter: publicMenuLimiter }));
+  app.use(clerkAuthMiddleware || clerkMiddleware());
 
   app.use('/api/users', createUserRouter({ auth, controller: userController }));
   app.use('/api/admin/users', createAdminUserRouter({ auth, controller: userController }));
   app.use('/api/menu', createMenuRouter({ auth, controller }));
   app.use('/api/media', createMediaRouter({ auth, controller: mediaController }));
   app.use('/api/tables', createTableRouter({ auth, controller: tableController }));
-  app.use('/api/public/qr', createPublicQrRouter(tableController));
   app.use(notFoundHandler);
   app.use(errorHandler);
   return app;
